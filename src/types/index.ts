@@ -25,8 +25,10 @@ export type DealType =
   | 'Buyout'
   | 'IPO'
   | 'Secondary'
+  | 'Exit (foreign)'
+  | 'Restructuring'
 
-export type DealStatus = 'Закрыта' | 'В процессе' | 'Анонсирована'
+export type DealStatus = 'Закрыта' | 'В процессе' | 'Анонсирована' | 'Отменена'
 
 export interface Deal {
   id: string
@@ -44,6 +46,7 @@ export interface Deal {
   description: string
   isPublic: boolean
   source: string
+  sourceUrl: string
 }
 
 export type SortField = 'date' | 'evMn' | 'evEbitdaMultiple' | 'target'

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import clsx from 'clsx'
 import type { Deal, SortDir } from '../../types'
 import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react'
+import { formatMoney, formatDateShort } from '../../lib/format'
 
 type SortField = 'date' | 'evMn' | 'evEbitdaMultiple' | 'target'
 
@@ -14,25 +15,15 @@ const dealTypeColors: Record<string, string> = {
   'Add-on': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   IPO: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
   Secondary: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+  'Exit (foreign)': 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+  Restructuring: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
 }
 
 const statusColors: Record<string, string> = {
   'Закрыта': 'text-success',
   'В процессе': 'text-warn',
   'Анонсирована': 'text-accent',
-}
-
-function formatMn(v: number | null): string {
-  if (v === null) return '—'
-  if (v >= 1_000_000) return `₽${(v / 1_000_000).toFixed(1)} трлн`
-  if (v >= 100_000) return `₽${(v / 1_000).toFixed(0)} млрд`
-  if (v >= 1_000) return `₽${(v / 1_000).toFixed(1)} млрд`
-  return `₽${v.toFixed(0)} млн`
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
+  'Отменена': 'text-danger',
 }
 
 interface Props {
@@ -88,7 +79,7 @@ export default function DealsTable({ data }: Props) {
         <thead>
           <tr className="bg-surface-2 border-b border-border-subtle">
             <Th field="date" label="Дата" />
-            <Th field="target" label="Компания" className="min-w-[160px]" />
+            <Th field="target" label="Компания" className="min-w-[180px]" />
             <th className="px-4 py-3 text-left text-text-muted text-xs font-medium">Тип</th>
             <th className="px-4 py-3 text-left text-text-muted text-xs font-medium">Покупатель</th>
             <Th field="evMn" label="Оценка EV" />
@@ -100,53 +91,65 @@ export default function DealsTable({ data }: Props) {
         </thead>
         <tbody>
           {sorted.map(deal => (
-            <>
+            <Fragment key={deal.id}>
               <tr
-                key={deal.id}
                 onClick={() => setExpanded(e => (e === deal.id ? null : deal.id))}
                 className={clsx(
                   'border-b border-border-subtle/50 transition-colors cursor-pointer',
                   expanded === deal.id ? 'bg-surface-3' : 'hover:bg-surface-2'
                 )}
               >
-                <td className="px-4 py-3 text-text-muted text-xs whitespace-nowrap">{formatDate(deal.date)}</td>
+                <td className="px-4 py-3 text-text-muted text-xs whitespace-nowrap">{formatDateShort(deal.date)}</td>
                 <td className="px-4 py-3">
                   <div className="text-text-primary font-medium">{deal.target}</div>
                   <div className="text-text-muted text-xs">{deal.sector}</div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={clsx('text-xs px-2 py-0.5 rounded-full border font-medium', dealTypeColors[deal.dealType] ?? 'bg-surface-3 text-text-secondary border-border-subtle')}>
+                  <span className={clsx('text-xs px-2 py-0.5 rounded-full border font-medium whitespace-nowrap', dealTypeColors[deal.dealType] ?? 'bg-surface-3 text-text-secondary border-border-subtle')}>
                     {deal.dealType}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-text-secondary text-xs max-w-[160px] truncate">{deal.buyer}</td>
+                <td className="px-4 py-3 text-text-secondary text-xs max-w-[180px] truncate" title={deal.buyer}>{deal.buyer}</td>
                 <td className="px-4 py-3 text-mono text-text-primary font-medium whitespace-nowrap">
-                  {formatMn(deal.evMn)}
+                  {formatMoney(deal.evMn)}
                 </td>
                 <td className="px-4 py-3 text-mono text-text-primary">
-                  {deal.evEbitdaMultiple !== null ? `${deal.evEbitdaMultiple.toFixed(1)}x` : '—'}
+                  {deal.evEbitdaMultiple !== null && deal.evEbitdaMultiple > 0 ? `${deal.evEbitdaMultiple.toFixed(1)}x` : '—'}
                 </td>
                 <td className="px-4 py-3 text-text-secondary text-xs">
                   {deal.stakePercent !== null ? `${deal.stakePercent}%` : '—'}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={clsx('text-xs font-medium', statusColors[deal.status])}>
+                  <span className={clsx('text-xs font-medium whitespace-nowrap', statusColors[deal.status])}>
                     {deal.status}
                   </span>
                 </td>
-                <td className="px-4 py-3">
-                  <span className="flex items-center gap-1 text-text-muted text-xs hover:text-accent transition-colors">
+                <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                  <a
+                    href={deal.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-text-muted text-xs hover:text-accent transition-colors"
+                  >
                     {deal.source} <ExternalLink size={10} />
-                  </span>
+                  </a>
                 </td>
               </tr>
               {expanded === deal.id && (
-                <tr key={`${deal.id}-exp`} className="bg-surface-3 border-b border-border-subtle">
+                <tr className="bg-surface-3 border-b border-border-subtle">
                   <td colSpan={9} className="px-6 py-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="md:col-span-2">
                         <div className="text-text-muted text-xs mb-1">Описание сделки</div>
                         <div className="text-text-primary text-sm leading-relaxed">{deal.description}</div>
+                        <a
+                          href={deal.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 mt-3 text-accent text-xs hover:text-accent-hover transition-colors"
+                        >
+                          Открыть в источнике ({deal.source}) <ExternalLink size={10} />
+                        </a>
                       </div>
                       <div className="space-y-2">
                         <div>
@@ -156,7 +159,7 @@ export default function DealsTable({ data }: Props) {
                         <div>
                           <div className="text-text-muted text-xs">Публичная компания</div>
                           <div className={clsx('text-sm', deal.isPublic ? 'text-success' : 'text-text-secondary')}>
-                            {deal.isPublic ? 'Да (торгуется на MOEX)' : 'Нет (частная)'}
+                            {deal.isPublic ? 'Да (MOEX)' : 'Нет (частная)'}
                           </div>
                         </div>
                       </div>
@@ -164,7 +167,7 @@ export default function DealsTable({ data }: Props) {
                   </td>
                 </tr>
               )}
-            </>
+            </Fragment>
           ))}
         </tbody>
       </table>

@@ -7,19 +7,16 @@ import type { DealType } from '../types'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts'
+import { formatMoney } from '../lib/format'
+import { Database } from 'lucide-react'
 
-function formatMn(v: number): string {
-  if (v >= 1_000_000) return `₽${(v / 1_000_000).toFixed(2)} трлн`
-  if (v >= 100_000) return `₽${(v / 1_000).toFixed(0)} млрд`
-  return `₽${(v / 1_000).toFixed(1)} млрд`
-}
-
-const PIE_COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#64748b', '#f97316']
+const PIE_COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#64748b', '#f97316', '#ec4899', '#84cc16']
 
 export default function DealsPage() {
   const [search, setSearch] = useState('')
   const [selectedTypes, setSelectedTypes] = useState<DealType[]>([])
   const [selectedSectors, setSelectedSectors] = useState<string[]>([])
+  const [yearFilter, setYearFilter] = useState<string | null>(null)
 
   function toggleType(t: DealType) {
     setSelectedTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
@@ -29,48 +26,79 @@ export default function DealsPage() {
     setSelectedSectors(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
   }
 
+  function reset() {
+    setSearch('')
+    setSelectedTypes([])
+    setSelectedSectors([])
+    setYearFilter(null)
+  }
+
+  const availableYears = useMemo(() => {
+    const s = new Set(deals.map(d => d.date.slice(0, 4)))
+    return Array.from(s).sort().reverse()
+  }, [])
+
   const filtered = useMemo(() => {
     return deals.filter(d => {
       if (search) {
         const q = search.toLowerCase()
-        if (!d.target.toLowerCase().includes(q) && !d.buyer.toLowerCase().includes(q) && !d.sector.toLowerCase().includes(q)) return false
+        if (
+          !d.target.toLowerCase().includes(q) &&
+          !d.buyer.toLowerCase().includes(q) &&
+          !d.sector.toLowerCase().includes(q) &&
+          !(d.seller ?? '').toLowerCase().includes(q)
+        ) return false
       }
       if (selectedTypes.length > 0 && !selectedTypes.includes(d.dealType)) return false
       if (selectedSectors.length > 0 && !selectedSectors.includes(d.sectorId)) return false
+      if (yearFilter && !d.date.startsWith(yearFilter)) return false
       return true
     })
-  }, [search, selectedTypes, selectedSectors])
+  }, [search, selectedTypes, selectedSectors, yearFilter])
 
   const byType = useMemo(() => {
     const counts: Record<string, number> = {}
-    deals.forEach(d => { counts[d.dealType] = (counts[d.dealType] ?? 0) + 1 })
-    return Object.entries(counts).map(([name, value]) => ({ name, value }))
-  }, [])
+    filtered.forEach(d => { counts[d.dealType] = (counts[d.dealType] ?? 0) + 1 })
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .map(([name, value]) => ({ name, value }))
+  }, [filtered])
 
   const bySector = useMemo(() => {
     const totals: Record<string, number> = {}
-    deals.forEach(d => {
+    filtered.forEach(d => {
       if (d.evMn) totals[d.sector] = (totals[d.sector] ?? 0) + d.evMn
     })
     return Object.entries(totals)
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 7)
-      .map(([name, value]) => ({ name: name.replace(' и ', '\nи ').replace('АПК и пищевая промышленность', 'АПК'), value }))
-  }, [])
+      .slice(0, 8)
+      .map(([name, value]) => ({ name: name.replace('АПК и пищевая промышленность', 'АПК').replace(' и горнодобыча', '').replace(' и фарма', '').replace(' и логистика', '').replace(' и девелопмент', '').replace(' и нефтехимия', ''), value }))
+  }, [filtered])
+
+  const totalVolume = useMemo(() => filtered.reduce((s, d) => s + (d.evMn ?? 0), 0), [filtered])
 
   return (
     <div className="flex-1 flex flex-col">
       <Header
-        title="Сделки"
-        subtitle={`${deals.length} сделок M&A и PE в российском рынке`}
+        title="Сделки M&A и Private Equity"
+        subtitle={`База: ${deals.length} сделок за 2022–2025 · покрытие: РБК, Коммерсантъ, Ведомости, Forbes, Interfax, MOEX`}
       />
 
       <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+        {/* Summary banner */}
+        <div className="flex items-center gap-3 bg-accent-muted border border-accent/30 rounded-xl px-4 py-3">
+          <Database size={16} className="text-accent" />
+          <div className="text-sm">
+            <span className="text-text-primary font-semibold">{filtered.length}</span>
+            <span className="text-text-secondary"> сделок отфильтровано · суммарный EV: </span>
+            <span className="text-text-primary font-mono font-semibold">{formatMoney(totalVolume)}</span>
+          </div>
+        </div>
+
         {/* Charts row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* By type */}
           <div className="bg-surface-2 border border-border-subtle rounded-xl p-5">
-            <div className="text-text-primary font-semibold mb-4">Структура сделок по типу</div>
+            <div className="text-text-primary font-semibold mb-4">Структура по типу</div>
             <div className="flex items-center gap-4">
               <ResponsiveContainer width={140} height={140}>
                 <PieChart>
@@ -84,7 +112,7 @@ export default function DealsPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex-1 space-y-1.5">
-                {byType.map((entry, i) => (
+                {byType.slice(0, 8).map((entry, i) => (
                   <div key={entry.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
@@ -97,25 +125,23 @@ export default function DealsPage() {
             </div>
           </div>
 
-          {/* By sector volume */}
           <div className="bg-surface-2 border border-border-subtle rounded-xl p-5">
-            <div className="text-text-primary font-semibold mb-4">Объём сделок по секторам (EV)</div>
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={bySector} layout="vertical" margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
+            <div className="text-text-primary font-semibold mb-4">Объём по секторам (EV)</div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={bySector} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#1e2d4a" />
-                <XAxis type="number" tick={{ fill: '#64748b', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => formatMn(v)} />
-                <YAxis dataKey="name" type="category" width={72} tick={{ fill: '#94a3b8', fontSize: 10 }} tickLine={false} axisLine={false} />
+                <XAxis type="number" tick={{ fill: '#64748b', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => formatMoney(v)} />
+                <YAxis dataKey="name" type="category" width={90} tick={{ fill: '#94a3b8', fontSize: 10 }} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{ background: '#141c30', border: '1px solid #2d4270', borderRadius: 8 }}
-                  formatter={(v: number) => [formatMn(v), 'EV']}
+                  formatter={(v: number) => [formatMoney(v), 'EV']}
                 />
-                <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={12} />
+                <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={14} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Filters */}
         <div className="bg-surface-2 border border-border-subtle rounded-xl p-5">
           <DealFilters
             search={search}
@@ -124,12 +150,15 @@ export default function DealsPage() {
             onTypeToggle={toggleType}
             selectedSectors={selectedSectors}
             onSectorToggle={toggleSector}
+            yearFilter={yearFilter}
+            onYearChange={setYearFilter}
+            availableYears={availableYears}
             totalCount={deals.length}
             filteredCount={filtered.length}
+            onReset={reset}
           />
         </div>
 
-        {/* Table */}
         <DealsTable data={filtered} />
       </div>
     </div>

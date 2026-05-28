@@ -3,7 +3,8 @@ import Sidebar from './components/Layout/Sidebar'
 import DashboardPage from './pages/DashboardPage'
 import MultiplesPage from './pages/MultiplesPage'
 import DealsPage from './pages/DealsPage'
-import TrendsPage from './pages/TrendsPage'
+import NewsPage from './pages/NewsPage'
+import MethodologyPage from './pages/MethodologyPage'
 
 export default function App() {
   return (
@@ -15,7 +16,8 @@ export default function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/multiples" element={<MultiplesPage />} />
             <Route path="/deals" element={<DealsPage />} />
-            <Route path="/trends" element={<TrendsPage />} />
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/methodology" element={<MethodologyPage />} />
           </Routes>
         </main>
       </div>
