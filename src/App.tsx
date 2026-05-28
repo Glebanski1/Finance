@@ -7,6 +7,7 @@ import CompaniesPage from './pages/CompaniesPage'
 import CompanyPage from './pages/CompanyPage'
 import NewsPage from './pages/NewsPage'
 import MethodologyPage from './pages/MethodologyPage'
+import IpoCalendarPage from './pages/IpoCalendarPage'
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
             <Route path="/company/:id" element={<CompanyPage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/methodology" element={<MethodologyPage />} />
+            <Route path="/ipo-calendar" element={<IpoCalendarPage />} />
           </Routes>
         </main>
       </div>

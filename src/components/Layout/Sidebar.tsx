@@ -7,6 +7,7 @@ import {
   Newspaper,
   BookOpen,
   ChevronRight,
+  TrendingUp,
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -16,6 +17,7 @@ const navItems = [
   { to: '/deals', label: 'Сделки', icon: Briefcase, end: false },
   { to: '/companies', label: 'Компании', icon: Building2, end: false },
   { to: '/news', label: 'Новости', icon: Newspaper, end: false },
+  { to: '/ipo-calendar', label: 'Календарь IPO', icon: TrendingUp, end: false },
   { to: '/methodology', label: 'Методология', icon: BookOpen, end: false },
 ]
 
