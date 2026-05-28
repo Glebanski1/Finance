@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   BarChart3,
   Briefcase,
+  Building2,
   Newspaper,
   BookOpen,
   ChevronRight,
@@ -13,6 +14,7 @@ const navItems = [
   { to: '/', label: 'Обзор', icon: LayoutDashboard, end: true },
   { to: '/multiples', label: 'Мультипликаторы', icon: BarChart3, end: false },
   { to: '/deals', label: 'Сделки', icon: Briefcase, end: false },
+  { to: '/companies', label: 'Компании', icon: Building2, end: false },
   { to: '/news', label: 'Новости', icon: Newspaper, end: false },
   { to: '/methodology', label: 'Методология', icon: BookOpen, end: false },
 ]

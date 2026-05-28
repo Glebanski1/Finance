@@ -1,8 +1,10 @@
 import { useState, Fragment } from 'react'
+import { Link } from 'react-router-dom'
 import clsx from 'clsx'
 import type { Deal, SortDir } from '../../types'
 import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react'
 import { formatMoney, formatDateShort } from '../../lib/format'
+import { getCompanyHref } from '../../data/companies'
 
 type SortField = 'date' | 'evMn' | 'evEbitdaMultiple' | 'target'
 
@@ -100,8 +102,13 @@ export default function DealsTable({ data }: Props) {
                 )}
               >
                 <td className="px-4 py-3 text-text-muted text-xs whitespace-nowrap">{formatDateShort(deal.date)}</td>
-                <td className="px-4 py-3">
-                  <div className="text-text-primary font-medium">{deal.target}</div>
+                <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                  <Link
+                    to={getCompanyHref(deal.target)}
+                    className="text-text-primary font-medium hover:text-accent transition-colors"
+                  >
+                    {deal.target}
+                  </Link>
                   <div className="text-text-muted text-xs">{deal.sector}</div>
                 </td>
                 <td className="px-4 py-3">
@@ -109,7 +116,14 @@ export default function DealsTable({ data }: Props) {
                     {deal.dealType}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-text-secondary text-xs max-w-[180px] truncate" title={deal.buyer}>{deal.buyer}</td>
+                <td className="px-4 py-3 max-w-[180px] truncate" title={deal.buyer} onClick={e => e.stopPropagation()}>
+                  <Link
+                    to={getCompanyHref(deal.buyer)}
+                    className="text-text-secondary text-xs hover:text-accent transition-colors"
+                  >
+                    {deal.buyer}
+                  </Link>
+                </td>
                 <td className="px-4 py-3 text-mono text-text-primary font-medium whitespace-nowrap">
                   {formatMoney(deal.evMn)}
                 </td>
@@ -154,7 +168,9 @@ export default function DealsTable({ data }: Props) {
                       <div className="space-y-2">
                         <div>
                           <div className="text-text-muted text-xs">Продавец</div>
-                          <div className="text-text-secondary text-sm">{deal.seller}</div>
+                          <Link to={getCompanyHref(deal.seller)} className="text-text-secondary text-sm hover:text-accent transition-colors">
+                            {deal.seller}
+                          </Link>
                         </div>
                         <div>
                           <div className="text-text-muted text-xs">Публичная компания</div>

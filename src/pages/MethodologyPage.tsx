@@ -1,7 +1,9 @@
+import { Link } from 'react-router-dom'
 import Header from '../components/Layout/Header'
 import { methodology, formulas } from '../data/methodology'
 import { MOEX_SECTOR_INDICES } from '../lib/moex'
 import { sectorMultiples } from '../data/multiples'
+import { getCompanyHref } from '../data/companies'
 import { BookOpen, ExternalLink, AlertCircle, Database } from 'lucide-react'
 
 export default function MethodologyPage() {
@@ -99,9 +101,13 @@ export default function MethodologyPage() {
                         <div className="text-text-muted text-xs mb-1.5 font-medium">Топ-компании в выборке</div>
                         <div className="flex flex-wrap gap-1.5">
                           {m.topConstituents.map(c => (
-                            <span key={c} className="text-xs px-2 py-0.5 bg-surface-3 border border-border-subtle rounded-md text-text-secondary">
+                            <Link
+                              key={c}
+                              to={getCompanyHref(c)}
+                              className="text-xs px-2 py-0.5 bg-surface-3 border border-border-subtle rounded-md text-text-secondary hover:text-accent hover:border-accent/40 transition-colors"
+                            >
                               {c}
-                            </span>
+                            </Link>
                           ))}
                         </div>
                       </div>

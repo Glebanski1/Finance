@@ -9,6 +9,7 @@ import NewsCard from '../components/News/NewsCard'
 import { sectorMultiples } from '../data/multiples'
 import { deals } from '../data/deals'
 import { fallbackNews } from '../data/news'
+import { getCompanyHref } from '../data/companies'
 import { SectorBarChart } from '../components/Multiples/MultiplesChart'
 import { fetchSectorIndices, fetchBenchmark, MOEX_SECTOR_INDICES, MOEX_BENCHMARKS } from '../lib/moex'
 import { fetchAllNews } from '../lib/news'
@@ -183,7 +184,12 @@ export default function DashboardPage() {
                 <div key={deal.id} className="flex items-start gap-3 p-3 bg-surface-3 rounded-lg border border-border-subtle/50 hover:border-border-muted transition-colors">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-text-primary text-sm font-medium truncate">{deal.target}</span>
+                      <Link
+                        to={getCompanyHref(deal.target)}
+                        className="text-text-primary text-sm font-medium truncate hover:text-accent transition-colors"
+                      >
+                        {deal.target}
+                      </Link>
                       <span className={clsx('text-xs px-1.5 py-0.5 rounded-full border font-medium shrink-0', dealTypeColors[deal.dealType])}>
                         {deal.dealType}
                       </span>

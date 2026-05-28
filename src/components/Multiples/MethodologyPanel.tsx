@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { X, ExternalLink, BookOpen, Activity, AlertCircle } from 'lucide-react'
 import { methodology, formulas } from '../../data/methodology'
 import { MOEX_SECTOR_INDICES, type MoexIndexQuote } from '../../lib/moex'
+import { getCompanyHref } from '../../data/companies'
 import { formatPct } from '../../lib/format'
 import clsx from 'clsx'
 
@@ -175,9 +177,13 @@ export default function MethodologyPanel({ sectorId, onClose, liveQuote }: Props
               <div className="text-text-secondary text-xs mb-2 font-medium">Топ-компании в выборке</div>
               <div className="flex flex-wrap gap-1.5">
                 {m.topConstituents.map(c => (
-                  <span key={c} className="text-xs px-2 py-1 bg-surface-3 border border-border-subtle rounded-md text-text-secondary">
+                  <Link
+                    key={c}
+                    to={getCompanyHref(c)}
+                    className="text-xs px-2 py-1 bg-surface-3 border border-border-subtle rounded-md text-text-secondary hover:text-accent hover:border-accent/40 transition-colors"
+                  >
                     {c}
-                  </span>
+                  </Link>
                 ))}
               </div>
             </div>
